@@ -1,13 +1,16 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 
 # Install System Dependencies
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     libzip-dev \
+    libpng-dev \
+    libfreetype6-dev \
     zip \
     unzip \
     git \
-    && docker-php-ext-install pdo pdo_pgsql zip bcmath
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_pgsql zip bcmath gd
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
