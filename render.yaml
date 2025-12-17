@@ -24,6 +24,10 @@ services:
           property: connectionString
       - key: LOG_CHANNEL
         value: stderr
+      - key: APP_URL
+        value: https://tire-backend-h8tz.onrender.com
+      - key: L5_SWAGGER_CONST_HOST
+        value: https://tire-backend-h8tz.onrender.com
 databases:
   - name: tire-db
     plan: free
