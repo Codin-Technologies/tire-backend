@@ -1,0 +1,1830 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Tire Management System API",
+        "description": "API documentation for the Tire Management System",
+        "contact": {
+            "email": "admin@example.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost",
+            "description": "Demo API Server"
+        }
+    ],
+    "paths": {
+        "/api/admin/roles": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "List all roles",
+                "operationId": "9285d254286f45fb786941fba4014aaf",
+                "responses": {
+                    "200": {
+                        "description": "Role list"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Create new role",
+                "operationId": "b9f24a129e5b8c30ae474cf8994a2c18",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Regional Manager"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Role created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/roles/{id}": {
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete role",
+                "operationId": "b88ad97f8f88ffa5bfc985a65190d1e4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/users": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "List all users",
+                "operationId": "ce48afe90d79aeebc3f8c7473e0aa0b2",
+                "responses": {
+                    "200": {
+                        "description": "User list"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Create new user",
+                "operationId": "616dfc32f0b7a09d7f549a4c1c1736aa",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "role": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/users/{id}": {
+            "put": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Update user",
+                "operationId": "e248f77aed8c11fd53fe4e091cfaf874",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "role": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete user",
+                "operationId": "03e4bf811cd63c0d3b9cf5da4dca7f85",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deactivated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/alerts": {
+            "get": {
+                "tags": [
+                    "Alerts"
+                ],
+                "summary": "List all alerts",
+                "operationId": "7c7ead5719e2bf95efb9450701d710e9",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of alerts"
+                    }
+                }
+            }
+        },
+        "/api/alerts/{id}": {
+            "get": {
+                "tags": [
+                    "Alerts"
+                ],
+                "summary": "Get alert details",
+                "operationId": "267540a2e3762632d8fcf3652293cde1",
+                "responses": {
+                    "200": {
+                        "description": "Alert details"
+                    }
+                }
+            }
+        },
+        "/api/alerts/{id}/resolve": {
+            "post": {
+                "tags": [
+                    "Alerts"
+                ],
+                "summary": "Resolve an alert",
+                "operationId": "736de8e0092241c50ac2ccfdad6d3aa7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "notes": {
+                                        "description": "Resolution notes",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Alert resolved"
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login user",
+                "operationId": "5ff65de709f154dc56029dd6b20c3adb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@tire-system.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "user": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout user",
+                "operationId": "f141d56c9f47ddfea5db9b8eb0b48dd4",
+                "responses": {
+                    "200": {
+                        "description": "Logged out"
+                    }
+                }
+            }
+        },
+        "/api/user": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get authenticated user",
+                "operationId": "50c8f92e0ce4952d0bbe5eee2369861b",
+                "responses": {
+                    "200": {
+                        "description": "User details with roles"
+                    }
+                }
+            }
+        },
+        "/api/change-password": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Change Password",
+                "operationId": "2ae56a9c14b57d423bb44419dd642348",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "new_password_confirmation": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password changed"
+                    }
+                }
+            }
+        },
+        "/api/inspections": {
+            "get": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "List all inspections",
+                "operationId": "cdb1fd832563e68e25989020d115f480",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of inspections"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "Create inspection task",
+                "operationId": "4540ab73a00c3c035bc66624ea7395a1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "vehicle_id",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "vehicle_id": {
+                                        "type": "integer"
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    },
+                                    "scheduled_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "assigned_to": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Inspection task created"
+                    }
+                }
+            }
+        },
+        "/api/inspections/{id}": {
+            "get": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "Get inspection details",
+                "operationId": "93c79566c217ffe8b5c2e701a1ee8be2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Inspection details"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "Edit inspection task",
+                "operationId": "5054c55501e3ee65f66285289614144b",
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            }
+        },
+        "/api/inspections/{id}/assign": {
+            "post": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "Assign inspection to inspector",
+                "operationId": "87d5b373cf59e1e8b882c1be172ec4ab",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Assigned"
+                    }
+                }
+            }
+        },
+        "/api/inspections/{id}/schedule": {
+            "post": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "Schedule inspection",
+                "operationId": "e3dafc9beded7656fc39383d0480e42b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "scheduled_at"
+                                ],
+                                "properties": {
+                                    "scheduled_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Scheduled"
+                    }
+                }
+            }
+        },
+        "/api/inspections/{id}/review": {
+            "post": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "Submit inspection for review",
+                "operationId": "212e5503689e54ebc8f773e0fbd12714",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Under Review"
+                    }
+                }
+            }
+        },
+        "/api/inspections/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "Approve inspection",
+                "operationId": "e3ded5d3a89bec6905b4982f1b3a2644",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Approved"
+                    }
+                }
+            }
+        },
+        "/api/inspections/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "Reject inspection",
+                "operationId": "9dc706440481c2e3a9641497f194ce19",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rejected"
+                    }
+                }
+            }
+        },
+        "/api/inspection-types": {
+            "get": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "Get inspection types",
+                "operationId": "e92d6f8db619c5be99161ee701fc359f",
+                "responses": {
+                    "200": {
+                        "description": "List of types"
+                    }
+                }
+            }
+        },
+        "/api/inspection-checklist": {
+            "get": {
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "Get inspection checklist",
+                "operationId": "34b85f842ea717cb3b1f92bbc037cc1a",
+                "responses": {
+                    "200": {
+                        "description": "Checklist definitions"
+                    }
+                }
+            }
+        },
+        "/api/operations/mount": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Mounts a tire onto a vehicle at a specific position Mounts Validates that the tire exists, is not retired or defective, is compatible with the vehicle/axle, and that the vehicle exists. Captures vehicle mileage, technician (logged-inuser), timestamp, optional photos and notes. Updates tire status to mounted and records lifecycle history",
+                "operationId": "55c467a4e47c591cfcf8cdff069b5d6f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tire_id",
+                                    "vehicle_id",
+                                    "position",
+                                    "odometer"
+                                ],
+                                "properties": {
+                                    "tire_id": {
+                                        "type": "integer"
+                                    },
+                                    "vehicle_id": {
+                                        "type": "integer"
+                                    },
+                                    "position": {
+                                        "type": "string"
+                                    },
+                                    "odometer": {
+                                        "type": "integer"
+                                    },
+                                    "user_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tire mounted"
+                    }
+                }
+            }
+        },
+        "/api/operations/dismount": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Dismount a tire",
+                "operationId": "d36fdc9e60c095f6c49a29a073124a51",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tire_id",
+                                    "to_warehouse_id",
+                                    "odometer"
+                                ],
+                                "properties": {
+                                    "tire_id": {
+                                        "type": "integer"
+                                    },
+                                    "to_warehouse_id": {
+                                        "type": "integer"
+                                    },
+                                    "odometer": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tire dismounted"
+                    }
+                }
+            }
+        },
+        "/api/operations/rotate": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Swap tire positions",
+                "operationId": "faa34a465d0fc445805d5d90243b6c11",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "vehicle_id",
+                                    "rotations",
+                                    "odometer"
+                                ],
+                                "properties": {
+                                    "vehicle_id": {
+                                        "type": "integer"
+                                    },
+                                    "rotations": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "tire_id": {
+                                                    "type": "integer"
+                                                },
+                                                "new_position": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "odometer": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rotation complete"
+                    }
+                }
+            }
+        },
+        "/api/operations/repair": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Record tire repair",
+                "operationId": "f70c24ccc79c39922c18739ae24e5c05",
+                "responses": {
+                    "200": {
+                        "description": "Repair recorded"
+                    }
+                }
+            }
+        },
+        "/api/operations/replace": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Replace a mounted tire",
+                "operationId": "b85cb60ab652f0febd2aff8169651001",
+                "responses": {
+                    "200": {
+                        "description": "Tire replaced"
+                    }
+                }
+            }
+        },
+        "/api/operations/validate-tire": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Validate tire eligibility",
+                "operationId": "68905c28a9b5c4354bc169bfc92892cd",
+                "responses": {
+                    "200": {
+                        "description": "Validation result"
+                    }
+                }
+            }
+        },
+        "/api/operations/validate-compatibility": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Check tire-vehicle compatibility",
+                "operationId": "c28abd3011ea42ef7b87e2287ad8a956",
+                "responses": {
+                    "200": {
+                        "description": "Compatibility Result"
+                    }
+                }
+            }
+        },
+        "/api/operations/assign-tire": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Pre-assign tire to position",
+                "operationId": "026d4d726f1b34af0a15e80f6a0377d9",
+                "responses": {
+                    "200": {
+                        "description": "Assigned"
+                    }
+                }
+            }
+        },
+        "/api/operations/positions": {
+            "get": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Get valid tire positions",
+                "operationId": "c8389adc4c1a96abe9df2d0ee0e06484",
+                "responses": {
+                    "200": {
+                        "description": "List of positions"
+                    }
+                }
+            }
+        },
+        "/api/operations/add-note": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Add note to operation",
+                "operationId": "f149f89b4625c3d14c8b00e122aa9436",
+                "responses": {
+                    "200": {
+                        "description": "Note added"
+                    }
+                }
+            }
+        },
+        "/api/operations/{id}": {
+            "get": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Get operation details",
+                "operationId": "f0cc94a5f76ad2a048039ac57cb7b18e",
+                "responses": {
+                    "200": {
+                        "description": "Detail"
+                    }
+                }
+            }
+        },
+        "/api/operations/user/{userId}": {
+            "get": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Get technician operations",
+                "operationId": "563ccc858efb02b511b4df3eae444e11",
+                "responses": {
+                    "200": {
+                        "description": "List"
+                    }
+                }
+            }
+        },
+        "/api/operations/vehicle/{vehicleId}": {
+            "get": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Get vehicle operations",
+                "operationId": "f202c2e92eef6920ce085d96494c0820",
+                "responses": {
+                    "200": {
+                        "description": "List"
+                    }
+                }
+            }
+        },
+        "/api/operations/dispose": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Retire/Dispose a tire",
+                "operationId": "728400943ce9213cc81b84a6137c8126",
+                "responses": {
+                    "200": {
+                        "description": "Tire retired"
+                    }
+                }
+            }
+        },
+        "/api/operations/upload-photo": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Upload photo for a tire operation",
+                "operationId": "23f37ee59b8cafbf727068690ff35ede",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "operation_id",
+                                    "photo"
+                                ],
+                                "properties": {
+                                    "operation_id": {
+                                        "type": "integer"
+                                    },
+                                    "photo": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Photo uploaded"
+                    }
+                }
+            }
+        },
+        "/api/operations/vehicles": {
+            "get": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "List all vehicles",
+                "operationId": "1c57cfddb11663a0f01746aa1f760949",
+                "responses": {
+                    "200": {
+                        "description": "List of vehicles"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Register a new vehicle",
+                "operationId": "458c3bfea49b110ac53548c6ed216697",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "registration_number",
+                                    "model",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "registration_number": {
+                                        "type": "string"
+                                    },
+                                    "fleet_number": {
+                                        "type": "string"
+                                    },
+                                    "model": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    },
+                                    "axle_config": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Vehicle created"
+                    }
+                }
+            }
+        },
+        "/api/operations/vehicles/{id}": {
+            "get": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Get vehicle details",
+                "operationId": "2b9de26cb267360c4f370c4388665f87",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vehicle details with mounted tires"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Update vehicle details",
+                "operationId": "29273df9449449aaa984aec6b2f53371",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "model": {
+                                        "type": "string"
+                                    },
+                                    "fleet_number": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Vehicle updated"
+                    }
+                }
+            }
+        },
+        "/api/operations/vehicles/{id}/timeline": {
+            "get": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Get vehicle operation timeline",
+                "operationId": "25595d6ff8d6a7f3ed9b7641cd44766e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vehicle operations timeline"
+                    }
+                }
+            }
+        },
+        "/api/operations/vehicles/{id}/archive": {
+            "delete": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Archive a vehicle",
+                "operationId": "c74b79375fb30ca86f3e22b951888f44",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vehicle archived"
+                    }
+                }
+            }
+        },
+        "/api/operations/vehicles/{id}/retire": {
+            "post": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Retire a vehicle",
+                "operationId": "b42f97bf73fd02aba5c2f4d7bf51561b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vehicle retired"
+                    }
+                }
+            }
+        },
+        "/api/vehicles/{id}/inspections": {
+            "get": {
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Get all inspections for a vehicle",
+                "operationId": "d284f6b524bbc34e49b9793cb0d22768",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of inspections"
+                    }
+                }
+            }
+        },
+        "/api/reports/low-stock": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Low stock report",
+                "operationId": "910d470f508b24d03c3329ab9fb9f714",
+                "responses": {
+                    "200": {
+                        "description": "Tires low in stock"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reports/tire-summary": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Tire status summary",
+                "operationId": "97c9ffef3bf778537ed58696d6f0b893",
+                "responses": {
+                    "200": {
+                        "description": "Summary of tires by status"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reports/inspection-compliance": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Inspection compliance report",
+                "operationId": "fa4c0ce97f6bdc9128661ba314d10e60",
+                "responses": {
+                    "200": {
+                        "description": "Compliance data"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reports/alerts-summary": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Alerts summary by severity",
+                "operationId": "c33885201dce98f8249a46fe101f43dc",
+                "responses": {
+                    "200": {
+                        "description": "Alert statistics"
+                    }
+                }
+            }
+        },
+        "/api/reports/tire-performance": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Tire Performance Analysis (CPK)",
+                "operationId": "b2ea157cb95e035bb153c09d12676dcb",
+                "responses": {
+                    "200": {
+                        "description": "Performance metrics per brand/model"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/stock/movements": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Record a stock movement (Transfer, Retire, Defect)",
+                "operationId": "88877875cb81f758765d883882e2b381",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tire_id",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "tire_id": {
+                                        "type": "integer"
+                                    },
+                                    "to_warehouse_id": {
+                                        "description": "Required for transfer",
+                                        "type": "integer"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "transfer",
+                                            "retire",
+                                            "defect",
+                                            "reserve",
+                                            "mount"
+                                        ]
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Movement recorded"
+                    }
+                }
+            }
+        },
+        "/api/stock/tires": {
+            "get": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "List all tires",
+                "operationId": "0109e5a43e6886d0bbc4e429a64ee0cd",
+                "parameters": [
+                    {
+                        "name": "brand",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of tires"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Add a single tire",
+                "operationId": "5fdf078ac8177c9c27820e5090bcc7b4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "brand",
+                                    "model",
+                                    "size",
+                                    "cost"
+                                ],
+                                "properties": {
+                                    "brand": {
+                                        "type": "string"
+                                    },
+                                    "model": {
+                                        "type": "string"
+                                    },
+                                    "size": {
+                                        "type": "string"
+                                    },
+                                    "serial_number": {
+                                        "type": "string"
+                                    },
+                                    "cost": {
+                                        "type": "number"
+                                    },
+                                    "vendor": {
+                                        "type": "string"
+                                    },
+                                    "warehouse_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tire created"
+                    }
+                }
+            }
+        },
+        "/api/stock/tires/{id}/label": {
+            "get": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get Tire QR Code Label",
+                "operationId": "bbf4d4de21b6103562d88570b1ed1105",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR Code Image",
+                        "content": {
+                            "image/png": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/api/stock/dashboard": {
+            "get": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get Tire Stock Statistics",
+                "operationId": "babfc904a2c356df2d876e0721f3ed8d",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard Statistics"
+                    }
+                }
+            }
+        },
+        "/api/stock/tires/{id}/history": {
+            "get": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get Tire Movement History",
+                "operationId": "761996491c93934e2e601e2f950ef01d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "History list"
+                    }
+                }
+            }
+        },
+        "/api/stock/tires/{id}": {
+            "get": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get single tire details",
+                "operationId": "c0e1a7088bd8a6af5ec1cf6497120f44",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tire details"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Update tire details",
+                "operationId": "7166808fe98e0f32ce28be653258be4b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "brand": {
+                                        "type": "string"
+                                    },
+                                    "model": {
+                                        "type": "string"
+                                    },
+                                    "size": {
+                                        "type": "string"
+                                    },
+                                    "cost": {
+                                        "type": "number"
+                                    },
+                                    "vendor": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tire updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Delete a tire",
+                "operationId": "2e23389788fb4519a76027eede6c46f4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Tire deleted"
+                    }
+                }
+            }
+        },
+        "/api/stock/tires/bulk": {
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Bulk Upload Tires (CSV)",
+                "operationId": "072f1e44b24345c3382169989c27d38e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Bulk created"
+                    }
+                }
+            }
+        },
+        "/api/stock/tires/{id}/lifecycle": {
+            "get": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get Tire Lifecycle (Operations)",
+                "operationId": "59b7edbb28a511c06940ce836d02fcd9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lifecycle events"
+                    }
+                }
+            }
+        },
+        "/api/stock/tires/{id}/operations": {
+            "get": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get all operations for a tire",
+                "operationId": "c8bb5f8b1e4912d9e44b2d443bf1e2ad",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of operations"
+                    }
+                }
+            }
+        },
+        "/api/tires/{id}/inspections": {
+            "get": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Get all inspections for a tire",
+                "operationId": "55cce22c0176baae441b8156f209fd58",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of inspections"
+                    }
+                }
+            }
+        },
+        "/api/test": {
+            "get": {
+                "operationId": "370b7c16e7d3d2a48904c1f8da373240",
+                "responses": {
+                    "200": {
+                        "description": "Test endpoint"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Admin",
+            "description": "Admin"
+        },
+        {
+            "name": "Alerts",
+            "description": "Alerts"
+        },
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "Inspection",
+            "description": "Inspection"
+        },
+        {
+            "name": "Operations",
+            "description": "Operations"
+        },
+        {
+            "name": "Reports",
+            "description": "Reports"
+        },
+        {
+            "name": "Stock",
+            "description": "Stock"
+        }
+    ]
+}
