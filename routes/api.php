@@ -5,6 +5,30 @@ use Illuminate\Support\Facades\Route;
 
 // Auth
 Route::post('login', [\App\Http\Controllers\Api\V1\Auth\AuthController::class, 'login'])->name('login');
+// Temporary Debug Route
+Route::get('/debug-status', function () {
+    try {
+        // 1. Check DB Connection
+        \DB::connection()->getPdo();
+        $dbStatus = "Connected: " . \DB::connection()->getDatabaseName();
+    } catch (\Exception $e) {
+        $dbStatus = "Failed: " . $e->getMessage();
+    }
+
+    return response()->json([
+        'app_name' => config('app.name'),
+        'app_env' => config('app.env'),
+        'app_debug' => config('app.debug'),
+        'database_status' => $dbStatus,
+        'app_key_exists' => !empty(config('app.key')),
+        'storage_writable' => is_writable(storage_path('logs')),
+        'env_vars' => [
+            'DB_HOST' => config('database.connections.pgsql.host'),
+            'APP_URL' => config('app.url'),
+        ]
+    ]);
+});
+
 Route::get('login', function() {
     return response()->json(['message' => 'Unauthenticated.'], 401);
 });
