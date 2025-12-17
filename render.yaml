@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: tire-backend
+    env: docker
+    dockerfilePath: ./Dockerfile.prod
+    plan: free
+    region: frankfurt
+    envVars:
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: DB_CONNECTION
+        value: pgsql
+      # You will need to add DB Credentials manually in Render Dashboard or add a Postgres service here
+databases:
+  - name: tire-db
+    plan: free
+    region: frankfurt
