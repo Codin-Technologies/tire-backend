@@ -14,7 +14,16 @@ services:
         value: false
       - key: DB_CONNECTION
         value: pgsql
-      # You will need to add DB Credentials manually in Render Dashboard or add a Postgres service here
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tire-db
+          property: connectionString
+      - key: DB_URL
+        fromDatabase:
+          name: tire-db
+          property: connectionString
+      - key: LOG_CHANNEL
+        value: stderr
 databases:
   - name: tire-db
     plan: free
