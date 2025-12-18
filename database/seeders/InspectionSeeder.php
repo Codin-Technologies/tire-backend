@@ -45,7 +45,8 @@ class InspectionSeeder extends Seeder
                 'assigned_to' => $assignedTo,
                 'scheduled_at' => $scheduledAt,
                 'completed_at' => $completedAt,
-                'user_id' => $status === 'pending' ? null : $user->id, // Who performed it
+                'completed_at' => $completedAt,
+                // 'user_id' => $status === 'pending' ? null : $user->id, // Removed: Column does not exist, covered by assigned_to
                 'odometer' => $completedAt ? $vehicle->odometer + rand(100, 500) : null,
                 'type' => 'routine',
                 'notes' => "Inspection generated in state: $status",
