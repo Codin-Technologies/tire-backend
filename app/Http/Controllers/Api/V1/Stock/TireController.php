@@ -131,8 +131,35 @@ class TireController extends Controller
                 ->groupBy('brand')
                 ->limit(5)
                 ->pluck('count', 'brand'),
-            'low_stock_alerts' => 0 // To be implemented with custom logic
         ];
+
+        // Low Stock Alerts
+        $thresholds = \App\Models\StockThreshold::all();
+        $alerts = [];
+        $lowStockCount = 0;
+
+        foreach ($thresholds as $threshold) {
+            $count = \App\Models\Tire::where('brand', $threshold->brand)
+                ->where('model', $threshold->model)
+                ->where('size', $threshold->size)
+                ->where('status', 'in_stock') // Assuming 'in_stock' or 'available' is the status for new stock. Checking 'available'
+                ->whereIn('status', ['available', 'new']) // Adjust status based on actual usage
+                ->count();
+
+            if ($count < $threshold->min_quantity) {
+                $lowStockCount++;
+                $alerts[] = [
+                    'brand' => $threshold->brand,
+                    'model' => $threshold->model,
+                    'size' => $threshold->size,
+                    'current' => $count,
+                    'min' => $threshold->min_quantity
+                ];
+            }
+        }
+
+        $stats['low_stock_alerts_count'] = $lowStockCount;
+        $stats['low_stock_details'] = $alerts;
 
         return response()->json($stats);
     }
@@ -240,35 +267,74 @@ class TireController extends Controller
 
         $file = $request->file('file');
         $handle = fopen($file->getRealPath(), 'r');
-        $header = fgetcsv($handle); // Assuming first row is header
+        $header = fgetcsv($handle); 
         
+        $results = [
+            'processed' => 0,
+            'success' => 0,
+            'failed' => 0,
+            'errors' => []
+        ];
+
+        // Sanitize header
+        $header = array_map('trim', $header);
         // Expected header: brand,model,size,cost,vendor,warehouse_id
-        
-        $created = 0;
+
+        $rowNum = 1; // 1-based, starting after header
         
         while ($row = fgetcsv($handle)) {
+            $rowNum++;
+            $results['processed']++;
+
+            if (count($row) !== count($header)) {
+                 $results['failed']++;
+                 $results['errors'][] = "Row $rowNum: Column count mismatch";
+                 continue;
+            }
+
             $data = array_combine($header, $row);
             
-            // Basic validation and mapping
-            if (!isset($data['brand']) || !isset($data['size'])) continue;
-            
-            $data['unique_tire_id'] = 'TIRE-' . strtoupper(uniqid());
-            $tire = \App\Models\Tire::create($data);
-            
-            if (isset($data['warehouse_id']) && $data['warehouse_id']) {
-                 \App\Models\StockMovement::create([
-                    'tire_id' => $tire->id,
-                    'to_warehouse_id' => $data['warehouse_id'],
-                    'type' => 'purchase',
-                    'notes' => 'Bulk upload',
-                ]);
+            // Basic validation
+            if (empty($data['brand']) || empty($data['size']) || empty($data['model'])) {
+                $results['failed']++;
+                $results['errors'][] = "Row $rowNum: Missing required fields (brand, size, or model)";
+                continue;
             }
-            $created++;
+            
+            try {
+                \DB::transaction(function () use ($data) {
+                    $uniqueId = 'TIRE-' . strtoupper(uniqid());
+                    $tire = \App\Models\Tire::create([
+                        'unique_tire_id' => $uniqueId,
+                        'brand' => $data['brand'],
+                        'model' => $data['model'],
+                        'size' => $data['size'],
+                        'cost' => $data['cost'] ?? 0,
+                        'vendor' => $data['vendor'] ?? null,
+                        'warehouse_id' => $data['warehouse_id'] ?? null,
+                        'status' => 'available', // Default status
+                        'serial_number' => $data['serial_number'] ?? null
+                    ]);
+
+                    if (!empty($data['warehouse_id'])) {
+                        \App\Models\StockMovement::create([
+                            'tire_id' => $tire->id,
+                            'to_warehouse_id' => $data['warehouse_id'],
+                            'type' => 'purchase',
+                            'notes' => 'Bulk upload',
+                        ]);
+                    }
+                });
+                $results['success']++;
+            } catch (\Exception $e) {
+                $results['failed']++;
+                $results['errors'][] = "Row $rowNum: " . $e->getMessage();
+            }
         }
         
         fclose($handle);
         
-        return response()->json(['message' => "$created tires uploaded successfully"], 201);
+        return response()->json($results, 201);
     }
     /**
      * @OA\Get(
