@@ -51,8 +51,11 @@ Route::prefix('stock')->middleware(['auth:sanctum', 'can:view stock'])->group(fu
     Route::get('tires/{id}/operations', [\App\Http\Controllers\Api\V1\Stock\TireController::class, 'operations']);
     Route::apiResource('tires', \App\Http\Controllers\Api\V1\Stock\TireController::class); // Index/Show covered by group. Store/Update needs specific checks if stricter.
     Route::post('movements', [\App\Http\Controllers\Api\V1\Stock\StockMovementController::class, 'store'])->middleware('can:edit stock');
-    // Stock Thresholds
-    Route::apiResource('thresholds', \App\Http\Controllers\Api\V1\Stock\StockThresholdController::class)->middleware('can:edit stock');
+});
+
+// SKU Management
+Route::prefix('sku')->middleware(['auth:sanctum', 'can:edit stock'])->group(function () {
+   Route::apiResource('thresholds', \App\Http\Controllers\Api\V1\Stock\StockThresholdController::class);
 });
 
 // Operations Management
