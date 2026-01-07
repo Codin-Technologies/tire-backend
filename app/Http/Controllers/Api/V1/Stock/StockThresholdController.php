@@ -10,9 +10,10 @@ class StockThresholdController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/stock/thresholds",
-     *     summary="List all stock thresholds",
-     *     tags={"Stock"},
+     *     path="/api/sku/thresholds",
+     *     summary="List all SKU stock thresholds",
+     *     tags={"SKU"},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Response(response="200", description="List of thresholds")
      * )
      */
@@ -23,9 +24,10 @@ class StockThresholdController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/stock/thresholds",
-     *     summary="Create or update a stock threshold",
-     *     tags={"Stock"},
+     *     path="/api/sku/thresholds",
+     *     summary="Create or update a SKU stock threshold",
+     *     tags={"SKU"},
+     *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -67,9 +69,10 @@ class StockThresholdController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/stock/thresholds/{id}",
-     *     summary="Delete a threshold",
-     *     tags={"Stock"},
+     *     path="/api/sku/thresholds/{id}",
+     *     summary="Delete a SKU threshold",
+     *     tags={"SKU"},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\Response(response="204", description="Deleted")
      * )
