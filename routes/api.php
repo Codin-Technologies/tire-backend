@@ -55,7 +55,21 @@ Route::prefix('stock')->middleware(['auth:sanctum', 'can:view stock'])->group(fu
 
 // SKU Management
 Route::prefix('sku')->middleware(['auth:sanctum', 'can:edit stock'])->group(function () {
-   Route::apiResource('thresholds', \App\Http\Controllers\Api\V1\Stock\StockThresholdController::class);
+    // SKU CRUD Operations
+    Route::get('list', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'index']); // List all SKUs with filters
+    Route::post('create', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'store']); // Create new SKU
+    Route::get('{sku_code}', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'show']); // Get SKU by code
+    Route::put('{sku_code}', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'update']); // Update SKU
+    Route::delete('{sku_code}', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'destroy']); // Delete SKU
+    
+    // Bulk Operations
+    Route::post('bulk-create', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'bulkStore']); // Bulk create SKUs
+    
+    // Stock Alerts
+    Route::get('stock-alerts', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'stockAlerts']); // Get low stock alerts
+    
+    // Stock Thresholds (existing)
+    Route::apiResource('thresholds', \App\Http\Controllers\Api\V1\Stock\StockThresholdController::class);
 });
 
 // Operations Management
