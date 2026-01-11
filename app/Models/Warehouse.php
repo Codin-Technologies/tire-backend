@@ -15,4 +15,14 @@ class Warehouse extends Model
     {
         return $this->hasMany(Tire::class);
     }
+
+    public function inventoryTires()
+    {
+        return $this->hasMany(InventoryTire::class);
+    }
+
+    public function skus()
+    {
+        return $this->hasMany(Sku::class, 'default_warehouse_id');
+    }
 }

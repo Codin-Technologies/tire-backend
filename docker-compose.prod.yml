@@ -1,0 +1,53 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - APP_NAME=Tire Management System
+      - APP_ENV=production
+      - APP_KEY=base64:SMv1kFT7sf59D/xmyLWNibyHzl984FYNcLoiStI+42M=
+      - APP_DEBUG=false
+      - APP_URL=http://194.146.13.23
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=tire_backend
+      - DB_USERNAME=tire_user
+      - DB_PASSWORD=SecureTirePass2024!
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOG_CHANNEL=stderr
+      - L5_SWAGGER_CONST_HOST=http://194.146.13.23
+    volumes:
+      - ./storage:/var/www/html/storage
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - tire-network
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=tire_backend
+      - POSTGRES_USER=tire_user
+      - POSTGRES_PASSWORD=SecureTirePass2024!
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - tire-network
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - tire-network
+
+volumes:
+  postgres-data:
+
+networks:
+  tire-network:
+    driver: bridge

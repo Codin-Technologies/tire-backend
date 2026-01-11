@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\Route;
 
 // Auth
 Route::post('login', [\App\Http\Controllers\Api\V1\Auth\AuthController::class, 'login'])->name('login');
-// Temporary Debug Route
+// Temporary Debug Route - DISABLED IN PRODUCTION
+/*
 Route::get('/debug-status', function () {
     try {
         // 1. Check DB Connection
@@ -28,7 +29,7 @@ Route::get('/debug-status', function () {
         ]
     ]);
 });
-
+*/
 Route::get('login', function() {
     return response()->json(['message' => 'Unauthenticated.'], 401);
 });
@@ -70,6 +71,19 @@ Route::prefix('sku')->middleware(['auth:sanctum', 'can:edit stock'])->group(func
     
     // Stock Thresholds (existing)
     Route::apiResource('thresholds', \App\Http\Controllers\Api\V1\Stock\StockThresholdController::class);
+});
+
+// Inventory Management
+Route::prefix('inventory')->middleware(['auth:sanctum', 'can:edit stock'])->group(function () {
+    // Receive tires into inventory
+    Route::post('receive', [\App\Http\Controllers\Api\V1\Inventory\InventoryController::class, 'receive']);
+    
+    // List and view inventory tires
+    Route::get('tires', [\App\Http\Controllers\Api\V1\Inventory\InventoryController::class, 'index']);
+    Route::get('tires/{dot_code}', [\App\Http\Controllers\Api\V1\Inventory\InventoryController::class, 'show']);
+    
+    // Update tire status
+    Route::put('tires/{dot_code}/status', [\App\Http\Controllers\Api\V1\Inventory\InventoryController::class, 'updateStatus']);
 });
 
 // Operations Management

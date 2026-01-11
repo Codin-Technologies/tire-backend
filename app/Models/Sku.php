@@ -30,6 +30,8 @@ class Sku extends Model
         'max_stock_level',
         'reorder_point',
         'metadata',
+        'default_supplier_id',
+        'default_warehouse_id',
     ];
 
     protected $casts = [
@@ -129,4 +131,37 @@ class Sku extends Model
         return $query->whereNotNull('reorder_point')
                      ->whereColumn('current_stock', '<=', 'reorder_point');
     }
+
+    /**
+     * Get default supplier for this SKU
+     */
+    public function defaultSupplier()
+    {
+        return $this->belongsTo(Supplier::class, 'default_supplier_id');
+    }
+
+    /**
+     * Get default warehouse for this SKU
+     */
+    public function defaultWarehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'default_warehouse_id');
+    }
+
+    /**
+     * Get all inventory tires for this SKU
+     */
+    public function inventoryTires()
+    {
+        return $this->hasMany(InventoryTire::class);
+    }
+
+    /**
+     * Get available inventory tires for this SKU
+     */
+    public function availableInventoryTires()
+    {
+        return $this->hasMany(InventoryTire::class)->where('status', 'AVAILABLE');
+    }
+}
 }

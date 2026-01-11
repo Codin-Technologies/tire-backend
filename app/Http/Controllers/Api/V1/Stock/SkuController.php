@@ -198,6 +198,8 @@ class SkuController extends Controller
                 'max_stock_level' => 'nullable|integer|min:0',
                 'reorder_point' => 'nullable|integer|min:0',
                 'metadata' => 'nullable|array',
+                'default_supplier_id' => 'nullable|integer|exists:suppliers,id',
+                'default_warehouse_id' => 'nullable|integer|exists:warehouses,id',
             ]);
 
             DB::beginTransaction();
@@ -299,6 +301,8 @@ class SkuController extends Controller
                 'max_stock_level' => 'nullable|integer|min:0',
                 'reorder_point' => 'nullable|integer|min:0',
                 'metadata' => 'nullable|array',
+                'default_supplier_id' => 'nullable|integer|exists:suppliers,id',
+                'default_warehouse_id' => 'nullable|integer|exists:warehouses,id',
             ]);
 
             DB::beginTransaction();
