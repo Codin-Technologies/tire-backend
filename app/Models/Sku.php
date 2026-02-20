@@ -32,6 +32,15 @@ class Sku extends Model
         'metadata',
         'default_supplier_id',
         'default_warehouse_id',
+        'retreadable',
+        'max_retread_cycles',
+        'expected_mileage',
+        'min_tread_depth',
+        'tire_category',
+        'preferred_warehouse_id',
+        'lead_time_days',
+        'budget_category',
+        'max_age_months',
     ];
 
     protected $casts = [
@@ -43,10 +52,18 @@ class Sku extends Model
         'reorder_point' => 'integer',
         'load_index' => 'integer',
         'metadata' => 'array',
+        'retreadable' => 'boolean',
+        'max_retread_cycles' => 'integer',
+        'expected_mileage' => 'integer',
+        'min_tread_depth' => 'decimal:2',
+        'lead_time_days' => 'integer',
+        'max_age_months' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    protected $appends = ['calculated_stock', 'stock_by_warehouse'];
 
     /**
      * Check if SKU is low on stock
@@ -149,11 +166,62 @@ class Sku extends Model
     }
 
     /**
+     * Get preferred warehouse for this SKU
+     */
+    public function preferredWarehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'preferred_warehouse_id');
+    }
+
+    /**
      * Get all inventory tires for this SKU
      */
     public function inventoryTires()
     {
         return $this->hasMany(InventoryTire::class);
+    }
+
+    /**
+     * Get legacy tires for this SKU
+     */
+    public function tires()
+    {
+        return $this->hasMany(Tire::class);
+    }
+
+    /**
+     * Get calculated stock from tire assets
+     */
+    public function getCalculatedStockAttribute(): int
+    {
+        return $this->tires()
+            ->where('status', 'available')
+            ->count();
+    }
+
+    /**
+     * Get stock breakdown by warehouse
+     */
+    public function getStockByWarehouseAttribute(): array
+    {
+        $breakdown = [];
+        
+        $groups = $this->tires()
+            ->where('status', 'available')
+            ->select('warehouse_id', \DB::raw('count(*) as count'))
+            ->groupBy('warehouse_id')
+            ->with('warehouse')
+            ->get();
+            
+        foreach ($groups as $group) {
+            $whName = $group->warehouse ? $group->warehouse->name : 'Unknown';
+            if (!isset($breakdown[$whName])) {
+                $breakdown[$whName] = 0;
+            }
+            $breakdown[$whName] += $group->count;
+        }
+        
+        return $breakdown;
     }
 
     /**
@@ -164,4 +232,4 @@ class Sku extends Model
         return $this->hasMany(InventoryTire::class)->where('status', 'AVAILABLE');
     }
 }
-}
+

@@ -31,7 +31,7 @@ class TireServiceController extends Controller
         $validated = $request->validate([
             'tire_id' => 'required|exists:tires,id',
             'vehicle_id' => 'required|exists:vehicles,id',
-            'position' => 'required|string',
+            'position' => 'required|string', // Can be axle_position_code e.g. "A2-R1"
             'odometer' => 'required|integer',
             'user_id' => 'nullable|exists:users,id', // Technician
             'notes' => 'nullable|string'
@@ -43,7 +43,16 @@ class TireServiceController extends Controller
             return response()->json(['error' => "Tire status '{$tire->status}' prevents mounting."], 400);
         }
 
-        // Check if position is occupied
+        // Check if position is occupied matches an AxlePosition
+        $axlePos = \App\Models\AxlePosition::where('vehicle_id', $validated['vehicle_id'])
+            ->where('position_code', $validated['position'])
+            ->first();
+
+        // Check legacy or AxlePosition occupancy
+        if ($axlePos && $axlePos->tire_id) {
+             return response()->json(['error' => 'Axle Position occupied by tire ID: ' . $axlePos->tire_id], 400);
+        }
+
         $occupant = \App\Models\Tire::where('vehicle_id', $validated['vehicle_id'])
             ->where('position', $validated['position'])
             ->where('status', 'mounted')
@@ -53,16 +62,21 @@ class TireServiceController extends Controller
             return response()->json(['error' => 'Position occupied by tire: ' . $occupant->unique_tire_id], 400);
         }
 
-        \DB::transaction(function () use ($tire, $validated) {
+        \DB::transaction(function () use ($tire, $validated, $axlePos) {
             // Update Vehicle Odometer
             \App\Models\Vehicle::where('id', $validated['vehicle_id'])->update(['odometer' => $validated['odometer']]);
+
+            // Assign to AxlePosition if exists
+            if ($axlePos) {
+                $axlePos->update(['tire_id' => $tire->id]);
+            }
 
             // Create Operation Record
             \App\Models\TireOperation::create([
                 'tire_id' => $tire->id,
                 'vehicle_id' => $validated['vehicle_id'],
                 'user_id' => $validated['user_id'] ?? null,
-                'type' => 'mount',
+                'type' => 'mount', // 'issue' alias can be handled in type if needed, but 'mount' is standard
                 'odometer' => $validated['odometer'],
                 'position' => $validated['position'],
                 'notes' => $validated['notes'] ?? null,
@@ -77,7 +91,31 @@ class TireServiceController extends Controller
             ]);
         });
 
-        return response()->json(['message' => 'Tire mounted', 'tire' => $tire->fresh()]);
+        return response()->json(['message' => 'Tire mounted/issued', 'tire' => $tire->fresh()]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/operations/issue",
+     *     summary="Issue a tire to a vehicle",
+     *     tags={"Operations"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"tire_id", "vehicle_id", "position", "odometer"},
+     *             @OA\Property(property="tire_id", type="integer"),
+     *             @OA\Property(property="vehicle_id", type="integer"),
+     *             @OA\Property(property="position", type="string"),
+     *             @OA\Property(property="odometer", type="integer"),
+     *             @OA\Property(property="user_id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response="200", description="Tire issued")
+     * )
+     */
+    public function issue(Request $request)
+    {
+        return $this->mount($request);
     }
 
     /**
@@ -117,6 +155,9 @@ class TireServiceController extends Controller
             // Update Vehicle Odometer
             \App\Models\Vehicle::where('id', $tire->vehicle_id)->update(['odometer' => $validated['odometer']]);
 
+            // Clear AxlePosition if exists
+            \App\Models\AxlePosition::where('tire_id', $tire->id)->update(['tire_id' => null]);
+
             // Create Operation Record
             \App\Models\TireOperation::create([
                 'tire_id' => $tire->id,
@@ -137,7 +178,29 @@ class TireServiceController extends Controller
             ]);
         });
 
-        return response()->json(['message' => 'Tire dismounted', 'tire' => $tire->fresh()]);
+        return response()->json(['message' => 'Tire dismounted/removed', 'tire' => $tire->fresh()]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/operations/remove",
+     *     summary="Remove a tire from a vehicle",
+     *     tags={"Operations"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"tire_id", "to_warehouse_id", "odometer"},
+     *             @OA\Property(property="tire_id", type="integer"),
+     *             @OA\Property(property="to_warehouse_id", type="integer"),
+     *             @OA\Property(property="odometer", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response="200", description="Tire removed")
+     * )
+     */
+    public function remove(Request $request)
+    {
+        return $this->dismount($request);
     }
 
     /**
@@ -172,22 +235,45 @@ class TireServiceController extends Controller
         ]);
 
         \DB::transaction(function () use ($validated) {
-            // Validate all tires are on the vehicle
+            // Clear AxlePositions first to avoid unique constraints or conflicts during swap
+            // NOTE: This assumes positions in AxlePosition are unique per vehicle! 
+            // We just need to ensure we don't violate constraints. But tires are foreign keys.
+            // We can temporarily set tire_id to null for affected axle positions?
+            
+            // Perform Rotation
             foreach ($validated['rotations'] as $rot) {
                 $tire = \App\Models\Tire::find($rot['tire_id']);
                 if ($tire->vehicle_id != $validated['vehicle_id']) {
                     throw new \Exception("Tire {$tire->unique_tire_id} is not on this vehicle.");
                 }
-                
-                // Clear position to avoid unique constraints during swap if any
-                // Note: Position is not unique in DB schema currently but logic might require care
-            }
-
-            // Perform Rotation
-            foreach ($validated['rotations'] as $rot) {
-                $tire = \App\Models\Tire::find($rot['tire_id']);
                 $oldPos = $tire->position;
                 
+                // Update AxlePosition
+                // 1. Remove from old axle pos
+                // \App\Models\AxlePosition::where('vehicle_id', $validated['vehicle_id'])
+                //    ->where('position_code', $oldPos)->update(['tire_id' => null]);
+                
+                // 2. Add to new axle pos (we do this last or careful order?)
+                // Actually, if we are swapping A <-> B. 
+                // A moves to pos B. B moves to pos A.
+                // If we process A first, we put A in B's AxlePosition. If B is still there, it might fail? 
+                // No, AxlePosition.tire_id is just a foreign key. It's not unique in the DB schema for AxlePosition (multiple positions can technically point to same tire? No, one tire one place).
+                // Actually, logic is cleaner if we just update everything.
+                
+                $targetAxlePos = \App\Models\AxlePosition::where('vehicle_id', $validated['vehicle_id'])
+                    ->where('position_code', $rot['new_position'])
+                    ->first();
+                    
+                if ($targetAxlePos) {
+                    $targetAxlePos->update(['tire_id' => $tire->id]);
+                    
+                    // Also need to clear the OLD position if it was an AxlePosition
+                     \App\Models\AxlePosition::where('vehicle_id', $validated['vehicle_id'])
+                        ->where('position_code', $oldPos)
+                        ->where('tire_id', $tire->id) // Only if it still thinks it has THIS tire
+                        ->update(['tire_id' => null]);
+                }
+
                 // Create Operation Record
                 \App\Models\TireOperation::create([
                     'tire_id' => $tire->id,

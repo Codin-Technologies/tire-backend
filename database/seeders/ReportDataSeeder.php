@@ -21,21 +21,31 @@ class ReportDataSeeder extends Seeder
 
         // 2. Create Low Stock Scenario
         // Only 2 tires of this specific high-value model
-        \App\Models\Tire::factory()->count(2)->create([
+        $lowStockSku = \App\Models\Sku::factory()->create([
             'brand' => 'CriticalBrand',
             'model' => 'LowStockModel-X',
             'size' => '295/80R22.5',
-            'status' => 'available', // Fixed from 'in_stock' to 'available'
+            'min_stock_level' => 10,
+        ]);
+
+        \App\Models\Tire::factory()->count(2)->create([
+            'sku_id' => $lowStockSku->id,
+            'status' => 'available', 
             'warehouse_id' => \App\Models\Warehouse::first()->id ?? null
         ]);
 
         // 3. Create Healthy Stock Scenario
         // 15 tires of this model
-        \App\Models\Tire::factory()->count(15)->create([
+        $highStockSku = \App\Models\Sku::factory()->create([
             'brand' => 'AbundantBrand',
             'model' => 'HighStockModel-Y',
             'size' => '295/80R22.5',
-            'status' => 'available', // Fixed from 'in_stock' to 'available'
+            'min_stock_level' => 5,
+        ]);
+
+        \App\Models\Tire::factory()->count(15)->create([
+            'sku_id' => $highStockSku->id,
+            'status' => 'available',
              'warehouse_id' => \App\Models\Warehouse::first()->id ?? null
         ]);
 

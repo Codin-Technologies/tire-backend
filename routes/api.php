@@ -60,6 +60,7 @@ Route::prefix('sku')->middleware(['auth:sanctum', 'can:edit stock'])->group(func
     Route::get('list', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'index']); // List all SKUs with filters
     Route::post('create', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'store']); // Create new SKU
     Route::get('{sku_code}', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'show']); // Get SKU by code
+    Route::get('{sku_code}/tires', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'tires']); // Get tires for SKU
     Route::put('{sku_code}', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'update']); // Update SKU
     Route::delete('{sku_code}', [\App\Http\Controllers\Api\V1\Stock\SkuController::class, 'destroy']); // Delete SKU
     
@@ -93,12 +94,16 @@ Route::prefix('operations')->middleware(['auth:sanctum', 'can:view operations'])
     Route::get('vehicles/{id}/timeline', [\App\Http\Controllers\Api\V1\Operations\VehicleController::class, 'timeline']);
     Route::delete('vehicles/{id}/archive', [\App\Http\Controllers\Api\V1\Operations\VehicleController::class, 'archive'])->middleware('can:edit stock');
     Route::post('vehicles/{id}/retire', [\App\Http\Controllers\Api\V1\Operations\VehicleController::class, 'retire'])->middleware('can:edit stock');
+    Route::get('vehicles/{id}/axle-configuration', [\App\Http\Controllers\Api\V1\Operations\VehicleController::class, 'getAxleConfiguration']);
+    Route::post('vehicles/{id}/axle-configuration', [\App\Http\Controllers\Api\V1\Operations\VehicleController::class, 'updateAxleConfiguration']);
     Route::apiResource('vehicles', \App\Http\Controllers\Api\V1\Operations\VehicleController::class);
 
     // Tire Service Operations (Requires 'perform operations')
     Route::middleware('can:perform operations')->group(function() {
         Route::post('mount', [\App\Http\Controllers\Api\V1\Operations\TireServiceController::class, 'mount']);
+        Route::post('issue', [\App\Http\Controllers\Api\V1\Operations\TireServiceController::class, 'issue']); // Alias for mount
         Route::post('dismount', [\App\Http\Controllers\Api\V1\Operations\TireServiceController::class, 'dismount']);
+        Route::post('remove', [\App\Http\Controllers\Api\V1\Operations\TireServiceController::class, 'remove']); // Alias for dismount
         Route::post('rotate', [\App\Http\Controllers\Api\V1\Operations\TireServiceController::class, 'rotate']);
         Route::post('repair', [\App\Http\Controllers\Api\V1\Operations\TireServiceController::class, 'repair']);
         Route::post('replace', [\App\Http\Controllers\Api\V1\Operations\TireServiceController::class, 'replace']);

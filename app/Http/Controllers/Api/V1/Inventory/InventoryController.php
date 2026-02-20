@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1\Inventory;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Sku;
-use App\Models\InventoryTire;
+use App\Models\Tire;
 use App\Models\Warehouse;
 use App\Models\Supplier;
 use App\Models\StockMovement;
@@ -62,26 +62,42 @@ class InventoryController extends Controller
     public function receive(Request $request)
     {
         try {
+            // Normalize input to support both snake_case (legacy/internal) and camelCase (frontend)
+            $inputs = $request->all();
+            if (isset($inputs['skuId']) && !isset($inputs['sku_id'])) $inputs['sku_id'] = $inputs['skuId'];
+            if (isset($inputs['warehouseId']) && !isset($inputs['warehouse_id'])) $inputs['warehouse_id'] = $inputs['warehouseId'];
+            
+            // Allow finding by code if provided, otherwise ID
+            $skuIdRule = isset($inputs['sku_code']) ? 'nullable' : 'required_without:sku_code|exists:skus,id';
+            
             // Validate request
-            $validated = $request->validate([
-                'sku_code' => 'required|string|exists:skus,sku_code',
+            $validator = \Illuminate\Support\Facades\Validator::make($inputs, [
+                'sku_id' => $skuIdRule,
+                'sku_code' => 'nullable|exists:skus,sku_code',
                 'warehouse_id' => 'required|integer|exists:warehouses,id',
-                'supplier_id' => 'required|integer|exists:suppliers,id',
-                'entry_mode' => ['required', Rule::in(['INDIVIDUAL', 'BULK'])],
+                'supplier_id' => 'nullable|integer|exists:suppliers,id', // Make nullable as per request example
+                'entry_mode' => ['nullable', Rule::in(['INDIVIDUAL', 'BULK'])],
                 'received_date' => 'nullable|date',
                 'tires' => 'required|array|min:1',
-                'tires.*.dot_code' => 'required|string|unique:inventory_tires,dot_code',
-                'tires.*.manufacture_week' => 'required|integer|min:1|max:52',
-                'tires.*.manufacture_year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
-                'tires.*.condition' => ['required', Rule::in(['NEW', 'USED', 'REFURBISHED', 'DAMAGED'])],
-                'tires.*.purchase_price' => 'nullable|numeric|min:0',
-                'tires.*.notes' => 'nullable|string|max:1000',
+                // Support both dot_code and dotCode in tires array checks if needed, but validation rules are strictly on what we pass to create/update usually.
+                // For simplicity, let's assume we normalize the array inside the loop or validate strict keys. 
+                // The user request shows "dotCode" in tires array.
             ]);
+
+            if ($validator->fails()) {
+                throw new \Illuminate\Validation\ValidationException($validator);
+            }
+
+            $validated = $validator->validated();
 
             DB::beginTransaction();
 
             // Get the SKU
-            $sku = Sku::where('sku_code', $validated['sku_code'])->firstOrFail();
+            if (!empty($validated['sku_id'])) {
+                $sku = Sku::findOrFail($validated['sku_id']);
+            } else {
+                $sku = Sku::where('sku_code', $validated['sku_code'])->firstOrFail();
+            }
 
             // Verify SKU is active
             if (!$sku->isActive()) {
@@ -91,9 +107,12 @@ class InventoryController extends Controller
                 ], 422);
             }
 
-            // Get warehouse and supplier
+            // Get warehouse
             $warehouse = Warehouse::findOrFail($validated['warehouse_id']);
-            $supplier = Supplier::findOrFail($validated['supplier_id']);
+            
+            // Get supplier (optional now)
+            $supplier = !empty($validated['supplier_id']) ? Supplier::find($validated['supplier_id']) : $sku->defaultSupplier; 
+            $supplierName = $supplier ? $supplier->supplier_name : 'Unknown Supplier';
 
             $receivedDate = $validated['received_date'] ?? now()->toDateString();
             $receivedTires = [];
@@ -101,43 +120,55 @@ class InventoryController extends Controller
 
             // Create individual tire records
             foreach ($validated['tires'] as $tireData) {
-                $tire = InventoryTire::create([
+                // Normalize tire data keys (dotCode -> dot_code)
+                $dotCode = $tireData['dot_code'] ?? ($tireData['dotCode'] ?? null);
+                
+                if (!$dotCode) {
+                     throw new \Exception("Missing DOT code for one or more tires");
+                }
+
+                // Generate Unique ID & Serial Number
+                $uniqueId = 'TIRE-' . strtoupper(uniqid());
+                // Serial Number format: SKU-WH-RANDOM (Simple strategy)
+                $serialNumber = strtoupper(substr($sku->sku_code, 0, 3) . '-' . substr($warehouse->name, 0, 3) . '-' . uniqid());
+
+                $tire = Tire::create([
+                    'unique_tire_id' => $uniqueId,
+                    'serial_number' => $serialNumber,
                     'sku_id' => $sku->id,
                     'warehouse_id' => $warehouse->id,
-                    'supplier_id' => $supplier->id,
-                    'dot_code' => strtoupper($tireData['dot_code']),
-                    'manufacture_week' => $tireData['manufacture_week'],
-                    'manufacture_year' => $tireData['manufacture_year'],
-                    'condition' => $tireData['condition'],
-                    'status' => 'AVAILABLE',
-                    'received_date' => $receivedDate,
-                    'purchase_price' => $tireData['purchase_price'] ?? null,
-                    'notes' => $tireData['notes'] ?? null,
+                    'dot_code' => strtoupper($dotCode),
+                    'manufacture_week' => $tireData['manufacture_week'] ?? 1,
+                    'manufacture_year' => $tireData['manufacture_year'] ?? date('Y'),
+                    'condition' => $tireData['condition'] ?? 'NEW',
+                    'status' => 'available', 
+                    'purchase_date' => $receivedDate,
+                    'cost' => $tireData['purchase_price'] ?? ($sku->cost_price ?? 0),
+                    'vendor' => $supplierName,
                 ]);
 
                 $receivedTires[] = $tire;
+
+                // Create stock movement record for this tire
+                StockMovement::create([
+                    'tire_id' => $tire->id,
+                    'to_warehouse_id' => $warehouse->id,
+                    'type' => 'purchase',
+                    'quantity' => 1,
+                    'notes' => "Received tire " . $tire->serial_number,
+                    'user_id' => auth()->id() ?? null,
+                ]);
             }
 
             // Update SKU stock count
             $sku->increment('current_stock', $tireCount);
-
-            // Create stock movement record
-            StockMovement::create([
-                'tire_id' => null, // This is for individual tire movements
-                'to_warehouse_id' => $warehouse->id,
-                'type' => 'purchase',
-                'quantity' => $tireCount,
-                'notes' => "Received {$tireCount} tires from {$supplier->supplier_name}",
-                'user_id' => auth()->id() ?? null,
-            ]);
 
             DB::commit();
 
             Log::info('Inventory received', [
                 'sku_code' => $sku->sku_code,
                 'tire_count' => $tireCount,
-                'warehouse_id' => $warehouse->id,
-                'supplier_id' => $supplier->id
+                'warehouse_id' => $warehouse->id
             ]);
 
             return response()->json([
@@ -146,19 +177,16 @@ class InventoryController extends Controller
                 'data' => [
                     'received_count' => $tireCount,
                     'sku_code' => $sku->sku_code,
-                    'sku_name' => $sku->sku_name,
                     'new_stock_level' => $sku->fresh()->current_stock,
-                    'warehouse' => $warehouse->name,
-                    'supplier' => $supplier->supplier_name,
-                    'tires' => $receivedTires->map(function ($tire) {
+                    'tires' => array_map(function ($tire) {
                         return [
                             'id' => $tire->id,
                             'dot_code' => $tire->dot_code,
-                            'qr_code' => $tire->qr_code,
+                            'serial_number' => $tire->serial_number,
                             'condition' => $tire->condition,
                             'status' => $tire->status,
                         ];
-                    }),
+                    }, $receivedTires)
                 ]
             ], 201);
 
@@ -205,7 +233,7 @@ class InventoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = InventoryTire::with(['sku', 'warehouse', 'supplier']);
+            $query = Tire::with(['sku', 'warehouse']);
 
             // Filter by SKU
             if ($request->has('sku_code')) {
@@ -264,15 +292,14 @@ class InventoryController extends Controller
     public function show($dotCode)
     {
         try {
-            $tire = InventoryTire::with(['sku', 'warehouse', 'supplier'])
+            $tire = Tire::with(['sku', 'warehouse'])
                 ->where('dot_code', strtoupper($dotCode))
                 ->firstOrFail();
 
             $tireData = $tire->toArray();
-            $tireData['age_in_months'] = $tire->getAgeInMonths();
             $tireData['age_in_weeks'] = $tire->getAgeInWeeks();
-            $tireData['is_expired'] = $tire->isExpired();
-            $tireData['is_available'] = $tire->isAvailable();
+            // $tireData['is_expired'] = $tire->isExpired(); // Add helper if needed
+            $tireData['is_available'] = $tire->status === 'available';
 
             return response()->json([
                 'success' => true,
@@ -316,10 +343,10 @@ class InventoryController extends Controller
     {
         try {
             $validated = $request->validate([
-                'status' => ['required', Rule::in(['AVAILABLE', 'RESERVED', 'SOLD', 'SCRAPPED', 'IN_USE'])],
+                'status' => ['required', Rule::in(['available', 'reserved', 'sold', 'scrapped', 'in_use', 'mounted'])],
             ]);
 
-            $tire = InventoryTire::where('dot_code', strtoupper($dotCode))->firstOrFail();
+            $tire = Tire::where('dot_code', strtoupper($dotCode))->firstOrFail();
             
             $oldStatus = $tire->status;
             $tire->status = $validated['status'];

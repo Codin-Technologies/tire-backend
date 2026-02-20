@@ -171,4 +171,85 @@ class VehicleController extends Controller
             
         return response()->json($inspections);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/operations/vehicles/{id}/axle-configuration",
+     *     summary="Get vehicle axle configuration",
+     *     tags={"Operations"},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response="200", description="Axle configuration details")
+     * )
+     */
+    public function getAxleConfiguration($id)
+    {
+        $vehicle = \App\Models\Vehicle::findOrFail($id);
+        $positions = $vehicle->axlePositions()->with('tire.sku')->orderBy('axle_number')->orderBy('position_code')->get();
+        return response()->json(['vehicle_id' => $id, 'positions' => $positions]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/operations/vehicles/{id}/axle-configuration",
+     *     summary="Update vehicle axle configuration",
+     *     tags={"Operations"},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"positions"},
+     *             @OA\Property(property="positions", type="array", @OA\Items(
+     *                 @OA\Property(property="position_code", type="string"),
+     *                 @OA\Property(property="axle_number", type="integer"),
+     *                 @OA\Property(property="side", type="string", enum={"L", "R"}),
+     *                 @OA\Property(property="tire_type_requirement", type="string")
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(response="200", description="Configuration updated")
+     * )
+     */
+    public function updateAxleConfiguration(Request $request, $id)
+    {
+        $vehicle = \App\Models\Vehicle::findOrFail($id);
+        
+        $validated = $request->validate([
+            'positions' => 'required|array',
+            'positions.*.position_code' => 'required|string',
+            'positions.*.axle_number' => 'required|integer',
+            'positions.*.side' => 'required|in:L,R',
+            'positions.*.tire_type_requirement' => 'nullable|in:STEER,DRIVE,TRAILER,ALL_POSITION',
+        ]);
+
+        \DB::transaction(function () use ($vehicle, $validated) {
+            // We do a sync-like operation. 
+            // 1. Identify existing codes to update
+            // 2. Add new ones
+            // 3. Remove ones not in list (careful if tires attached!)
+            
+            $providedCodes = collect($validated['positions'])->pluck('position_code')->toArray();
+            
+            // Check for tires on positions to be deleted
+            $toDelete = $vehicle->axlePositions()->whereNotIn('position_code', $providedCodes)->get();
+            foreach ($toDelete as $pos) {
+                if ($pos->tire_id) {
+                    throw new \Exception("Cannot remove position {$pos->position_code} because it has a tire mounted.");
+                }
+                $pos->delete();
+            }
+            
+            foreach ($validated['positions'] as $posData) {
+                $vehicle->axlePositions()->updateOrCreate(
+                    ['position_code' => $posData['position_code']],
+                    [
+                        'axle_number' => $posData['axle_number'],
+                        'side' => $posData['side'],
+                        'tire_type_requirement' => $posData['tire_type_requirement'] ?? null,
+                    ]
+                );
+            }
+        });
+
+        return response()->json(['message' => 'Axle configuration updated', 'positions' => $vehicle->axlePositions]);
+    }
 }

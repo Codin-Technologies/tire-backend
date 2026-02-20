@@ -19,11 +19,13 @@ class TireFactory extends Factory
         return [
             'unique_tire_id' => 'TIRE-' . strtoupper(uniqid()),
             'serial_number' => $this->faker->unique()->bothify('SN-#####-??'),
-            'brand' => $this->faker->randomElement(['Michelin', 'Bridgestone', 'Goodyear']),
-            'model' => $this->faker->word,
-            'size' => '295/80R22.5',
+            'sku_id' => \App\Models\Sku::factory(), // Create or link to SKU
+            'condition' => 'NEW',
+            'dot_code' => $this->faker->bothify('####'),
+            'manufacture_week' => $this->faker->numberBetween(1, 52),
+            'manufacture_year' => $this->faker->year(),
             'cost' => $this->faker->randomFloat(2, 300, 800),
-            'status' => 'in_stock',
+            'status' => 'available',
         ];
     }
 }

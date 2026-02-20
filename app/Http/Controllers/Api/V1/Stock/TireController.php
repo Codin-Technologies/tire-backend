@@ -21,13 +21,20 @@ class TireController extends Controller
      */
     public function index(Request $request)
     {
-        $query = \App\Models\Tire::query();
+        $query = \App\Models\Tire::with('sku');
 
+        if ($request->has('sku_id')) {
+            $query->where('sku_id', $request->sku_id);
+        }
         if ($request->has('brand')) {
-            $query->where('brand', 'ilike', '%' . $request->brand . '%');
+            $query->whereHas('sku', function ($q) use ($request) {
+                $q->where('brand', 'ilike', '%' . $request->brand . '%');
+            });
         }
         if ($request->has('size')) {
-            $query->where('size', $request->size);
+            $query->whereHas('sku', function ($q) use ($request) {
+                $q->where('size', $request->size);
+            });
         }
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -60,9 +67,7 @@ class TireController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'brand' => 'required|string',
-            'model' => 'required|string',
-            'size' => 'required|string',
+            'sku_id' => 'required|exists:skus,id',
             'serial_number' => 'nullable|string|unique:tires,serial_number',
             'cost' => 'required|numeric',
             'vendor' => 'nullable|string',
@@ -86,7 +91,7 @@ class TireController extends Controller
             ]);
         }
 
-        return response()->json($tire, 201);
+        return response()->json($tire->load('sku'), 201);
     }
     /**
      * @OA\Get(
@@ -127,8 +132,9 @@ class TireController extends Controller
             'by_status' => \App\Models\Tire::selectRaw('status, count(*)')
                 ->groupBy('status')
                 ->pluck('count', 'status'),
-            'by_brand' => \App\Models\Tire::selectRaw('brand, count(*)')
-                ->groupBy('brand')
+            'by_brand' => \App\Models\Sku::join('tires', 'skus.id', '=', 'tires.sku_id')
+                ->selectRaw('skus.brand, count(*)')
+                ->groupBy('skus.brand')
                 ->limit(5)
                 ->pluck('count', 'brand'),
         ];
@@ -215,16 +221,14 @@ class TireController extends Controller
     {
         $tire = \App\Models\Tire::findOrFail($id);
         $validated = $request->validate([
-            'brand' => 'sometimes|required|string',
-            'model' => 'sometimes|required|string',
-            'size' => 'sometimes|required|string',
+            'sku_id' => 'sometimes|exists:skus,id',
             'cost' => 'sometimes|required|numeric',
             'vendor' => 'nullable|string',
             'purchase_date' => 'nullable|date',
         ]);
 
         $tire->update($validated);
-        return response()->json($tire);
+        return response()->json($tire->load('sku'));
     }
 
     /**
@@ -278,8 +282,8 @@ class TireController extends Controller
 
         // Sanitize header
         $header = array_map('trim', $header);
-        // Expected header: brand,model,size,cost,vendor,warehouse_id
-
+        // Expected header: sku_code,cost,vendor,warehouse_id,serial_number
+        
         $rowNum = 1; // 1-based, starting after header
         
         while ($row = fgetcsv($handle)) {
@@ -295,20 +299,24 @@ class TireController extends Controller
             $data = array_combine($header, $row);
             
             // Basic validation
-            if (empty($data['brand']) || empty($data['size']) || empty($data['model'])) {
+            if (empty($data['sku_code'])) {
                 $results['failed']++;
-                $results['errors'][] = "Row $rowNum: Missing required fields (brand, size, or model)";
+                $results['errors'][] = "Row $rowNum: Missing required field (sku_code)";
                 continue;
             }
             
             try {
-                \DB::transaction(function () use ($data) {
+                \DB::transaction(function () use ($data, &$results, $rowNum) {
+                    $sku = \App\Models\Sku::where('sku_code', $data['sku_code'])->first();
+                    
+                    if (!$sku) {
+                        throw new \Exception("SKU not found: " . $data['sku_code']);
+                    }
+
                     $uniqueId = 'TIRE-' . strtoupper(uniqid());
                     $tire = \App\Models\Tire::create([
                         'unique_tire_id' => $uniqueId,
-                        'brand' => $data['brand'],
-                        'model' => $data['model'],
-                        'size' => $data['size'],
+                        'sku_id' => $sku->id,
                         'cost' => $data['cost'] ?? 0,
                         'vendor' => $data['vendor'] ?? null,
                         'warehouse_id' => $data['warehouse_id'] ?? null,

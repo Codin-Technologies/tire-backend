@@ -12,28 +12,19 @@ class TireSeeder extends Seeder
      */
     public function run(): void
     {
-        $brands = ['Michelin', 'Bridgestone', 'Goodyear', 'Continental', 'Pirelli'];
-        $models = ['X Multi', 'Ecopia', 'Endurance', 'CrossContact', 'P Zero'];
-        $sizes = ['295/80R22.5', '315/80R22.5', '11R22.5', '12R22.5'];
-        
         $mainWarehouse = \App\Models\Warehouse::first(); // Assuming seeded
-
         if (!$mainWarehouse) return;
 
-        for ($i = 0; $i < 50; $i++) {
-            $brand = $brands[array_rand($brands)];
-            
-            \App\Models\Tire::create([
-                'unique_tire_id' => 'TIRE-' . strtoupper(uniqid()),
-                'serial_number' => 'SN' . rand(100000, 999999),
-                'brand' => $brand,
-                'model' => $models[array_rand($models)],
-                'size' => $sizes[array_rand($sizes)],
-                'cost' => rand(300, 800),
-                'vendor' => 'Global Tires Inc.',
-                'purchase_date' => now()->subDays(rand(1, 365)),
+        // Create some SKUs first
+        $skus = \App\Models\Sku::factory()->count(10)->create();
+
+        foreach ($skus as $sku) {
+            // Create 5-10 tires for each SKU
+            \App\Models\Tire::factory()->count(rand(5, 10))->create([
+                'sku_id' => $sku->id,
                 'warehouse_id' => $mainWarehouse->id,
                 'status' => 'available',
+                'cost' => $sku->unit_price * 0.7, // Cost is usually lower than price
             ]);
         }
     }

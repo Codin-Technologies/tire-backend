@@ -21,4 +21,9 @@ class Vehicle extends Model
     {
         return $this->hasMany(Tire::class);
     }
+
+    public function axlePositions()
+    {
+        return $this->hasMany(AxlePosition::class);
+    }
 }

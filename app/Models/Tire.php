@@ -9,11 +9,13 @@ class Tire extends Model
 {
     use HasFactory;
     protected $fillable = [
+        'sku_id',
         'unique_tire_id',
         'serial_number',
-        'brand',
-        'model',
-        'size',
+        'dot_code',
+        'manufacture_week',
+        'manufacture_year',
+        'condition',
         'cost',
         'vendor',
         'purchase_date',
@@ -26,7 +28,27 @@ class Tire extends Model
     protected $casts = [
         'purchase_date' => 'date',
         'cost' => 'decimal:2',
+        'manufacture_week' => 'integer',
+        'manufacture_year' => 'integer',
     ];
+
+    public function getAgeInWeeks()
+    {
+        if (!$this->manufacture_year || !$this->manufacture_week) {
+            return null;
+        }
+        
+        $now = \Carbon\Carbon::now();
+        // Create date from week/year. "Monday" of that week.
+        $manufactureDate = \Carbon\Carbon::now()->setISODate($this->manufacture_year, $this->manufacture_week);
+        
+        return $manufactureDate->diffInWeeks($now);
+    }
+
+    public function sku()
+    {
+        return $this->belongsTo(Sku::class);
+    }
 
     public function warehouse()
     {

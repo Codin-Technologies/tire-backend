@@ -111,6 +111,14 @@ class SkuController extends Controller
             $skuData['needs_reorder'] = $sku->needsReorder();
             $skuData['stock_status'] = $sku->stock_status;
             $skuData['profit_margin'] = $sku->profit_margin;
+            
+            // Add stock breakdown
+            $skuData['stock'] = [
+                'total' => $sku->tires()->count(),
+                'available' => $sku->tires()->where('status', 'available')->count(),
+                'mounted' => $sku->tires()->where('status', 'mounted')->count(),
+                'scrapped' => $sku->tires()->where('status', 'scrapped')->count(),
+            ];
 
             return response()->json([
                 'success' => true,
@@ -126,6 +134,63 @@ class SkuController extends Controller
             Log::error('SKU Show Error: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Failed to retrieve SKU',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sku/{sku_code}/tires",
+     *     summary="Get all tires for a specific SKU",
+     *     tags={"SKU"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="sku_code", in="path", required=true, @OA\Schema(type="string")),
+     *     @OA\Response(
+     *         response="200", 
+     *         description="List of tires for SKU",
+     *         @OA\JsonContent(type="array", @OA\Items(
+     *             @OA\Property(property="tireId", type="integer"),
+     *             @OA\Property(property="serialNumber", type="string"),
+     *             @OA\Property(property="dotCode", type="string"),
+     *             @OA\Property(property="warehouse", type="string"),
+     *             @OA\Property(property="status", type="string"),
+     *             @OA\Property(property="condition", type="string")
+     *         ))
+     *     ),
+     *     @OA\Response(response="404", description="SKU not found")
+     * )
+     * 
+     * @param string $skuCode
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function tires($skuCode)
+    {
+        try {
+            $sku = Sku::where('sku_code', $skuCode)->firstOrFail();
+            
+            $tires = $sku->tires()->with('warehouse')->get()->map(function($tire) {
+                 return [
+                    'tireId' => $tire->id,
+                    'serialNumber' => $tire->serial_number,
+                    'dotCode' => $tire->dot_code,
+                    'warehouse' => $tire->warehouse->name ?? 'Unknown',
+                    'status' => strtoupper($tire->status),
+                    'condition' => $tire->condition,
+                 ];
+            });
+
+            return response()->json($tires, 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+             return response()->json([
+                'error' => 'SKU not found',
+                'message' => "SKU with code '{$skuCode}' does not exist"
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('SKU Tires List Error: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to retrieve SKU tires',
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -200,6 +265,15 @@ class SkuController extends Controller
                 'metadata' => 'nullable|array',
                 'default_supplier_id' => 'nullable|integer|exists:suppliers,id',
                 'default_warehouse_id' => 'nullable|integer|exists:warehouses,id',
+                'retreadable' => 'boolean',
+                'max_retread_cycles' => 'nullable|integer|min:0',
+                'expected_mileage' => 'nullable|integer|min:0',
+                'min_tread_depth' => 'nullable|numeric|min:0',
+                'tire_category' => ['nullable', Rule::in(['STEER', 'DRIVE', 'TRAILER', 'ALL_POSITION'])],
+                'preferred_warehouse_id' => 'nullable|integer|exists:warehouses,id',
+                'lead_time_days' => 'nullable|integer|min:0',
+                'budget_category' => 'nullable|string|max:50',
+                'max_age_months' => 'nullable|integer|min:1',
             ]);
 
             DB::beginTransaction();
@@ -303,6 +377,15 @@ class SkuController extends Controller
                 'metadata' => 'nullable|array',
                 'default_supplier_id' => 'nullable|integer|exists:suppliers,id',
                 'default_warehouse_id' => 'nullable|integer|exists:warehouses,id',
+                'retreadable' => 'boolean',
+                'max_retread_cycles' => 'nullable|integer|min:0',
+                'expected_mileage' => 'nullable|integer|min:0',
+                'min_tread_depth' => 'nullable|numeric|min:0',
+                'tire_category' => ['nullable', Rule::in(['STEER', 'DRIVE', 'TRAILER', 'ALL_POSITION'])],
+                'preferred_warehouse_id' => 'nullable|integer|exists:warehouses,id',
+                'lead_time_days' => 'nullable|integer|min:0',
+                'budget_category' => 'nullable|string|max:50',
+                'max_age_months' => 'nullable|integer|min:1',
             ]);
 
             DB::beginTransaction();
