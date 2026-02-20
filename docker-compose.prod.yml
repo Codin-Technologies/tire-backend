@@ -18,7 +18,7 @@ services:
       - DB_USERNAME=tire_user
       - DB_PASSWORD=SecureTirePass2024!
       - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_PORT=6380
       - LOG_CHANNEL=stderr
       - L5_SWAGGER_CONST_HOST=http://194.146.13.23
     volumes:
@@ -47,6 +47,7 @@ services:
 
 volumes:
   postgres-data:
+
 
 networks:
   tire-network:
